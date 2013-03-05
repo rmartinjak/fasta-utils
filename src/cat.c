@@ -76,7 +76,8 @@ int main(int argc, char **argv)
             fprintf(stderr, "%s: ", argv[i]);
             perror("");
         }
-        else {
+        else
+        {
             fasta_print_seqs(f, width, count);
             fclose(f);
         }
