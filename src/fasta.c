@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <ctype.h>
 
 #define BUFSZ 500
@@ -122,7 +121,10 @@ void fasta_write(FILE *stream, const char *id, const char *comment,
         fprintf(stream, "; %s\n", comment);
 
     if (!width)
-        width = SIZE_MAX;
+    {
+        fprintf(stream, "%s\n", seq);
+        return;
+    }
 
     while (*seq)
     {
