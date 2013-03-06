@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     int i, opt;
 
     if (fasta_init() != FASTA_OK)
-            return EXIT_FAILURE;
+        return EXIT_FAILURE;
 
     opt = fasta_getopt(argc, argv);
 
