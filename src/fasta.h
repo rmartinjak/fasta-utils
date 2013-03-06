@@ -7,6 +7,7 @@
 #define FASTA_OK 0
 #define FASTA_EOF -1
 #define FASTA_ERROR -2
+#define FASTA_CANCEL -3
 
 int fasta_read(FILE *stream, const char *accept, char **id,
                size_t *id_size, char **seq, size_t *seq_size);

@@ -1,28 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <getopt.h>
+
+#include "fasta.h"
+#include "main.h"
+
+int config = FASTA_NOSTDIN;
+
+
+static FILE *stream = NULL;
+static int width = FASTA_DEFAULTWIDTH;
+
 
 struct line
 {
     long pos;
-    size_t len;
     struct line *prev, *next;
 };
 
-struct line *line_get(struct line *ln, unsigned n)
+
+static int lines = 1, pos = 0;
+static struct line root = { -1, &root, &root };
+
+
+static struct line *line_get(struct line *ln, unsigned n)
 {
     while (n--)
         ln = ln->next;
     return ln;
 }
 
-struct line *line_add(struct line *ln, long pos, size_t len)
+static struct line *line_add(struct line *ln, long pos)
 {
     struct line *new = malloc(sizeof *new);
     if (new)
     {
         new->pos = pos;
-        new->len = len;
 
         new->next = ln->next;
         new->prev = ln;
@@ -33,75 +47,81 @@ struct line *line_add(struct line *ln, long pos, size_t len)
     return new;
 }
 
-void line_del(struct line *ln)
+static void line_del(struct line *ln)
 {
     ln->prev->next = ln->next;
     ln->next->prev = ln->prev;
 }
 
-void shuffle_file(const char *filename)
+
+int fasta_init(void)
 {
-    struct line root;
-    int c;
-    FILE *f;
-    long lines, pos;
-    size_t len;
+    srand(time(NULL));
+    return FASTA_OK;
+}
 
-    root.next = &root;
-    root.prev = &root;
-
-    f = fopen(filename, "r");
-    if (!f)
+int fasta_getopt(int argc, char **argv)
+{
+    int opt;
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:")) != -1)
     {
-        fprintf(stderr, "cannot open %s:", filename);
-        perror("");
-        return;
+        switch (opt)
+        {
+            case 'w':
+                width = fasta_parse_uint(optarg, "invalid width");
+                break;
+            case '?':
+                exit(EXIT_FAILURE);
+            default:
+                fasta_main_getopt(opt, optarg);
+        }
     }
+    return optind;
+}
 
+void fasta_file_begin(const char *path, FILE *newstream)
+{
+    (void) path;
+    stream = newstream;
     lines = 1;
     pos = 0;
-    len = 0;
-    while ((c = fgetc(f)) != EOF)
-    {
-        int next = fgetc(f);
-        len++;
-        if (c == '\n' && (next == '>' || next == EOF))
-        {
-            lines++;
-            line_add(&root, pos, len);
-            pos = ftell(f) - 1;
-            len = 0;
-        }
-        ungetc(next, f);
-    }
+}
+
+void fasta_file_end(void)
+{
+    char *id = NULL, *seq = NULL;
+    size_t id_n, seq_n;
+
+    if (!stream)
+        return;
 
     while (root.next != &root)
     {
-        struct line *r = &root;
-        struct line *ln = line_get(r, rand() % lines);
+        struct line *ln = line_get(&root, rand() % lines);
 
         if (ln == &root)
             continue;
 
-        fseek(f, ln->pos, SEEK_SET);
-        len = ln->len;
-        while (len--)
+        if (!fseek(stream, ln->pos, SEEK_SET) &&
+            fasta_read(stream, NULL, &id, &id_n, &seq, &seq_n) == FASTA_OK)
         {
-            c = fgetc(f);
-            putchar(c);
+            fasta_write(stdout, id, NULL, seq, width);
         }
+
         line_del(ln);
-        free(ln);
-        lines--;
     }
+    free(id);
+    free(seq);
 }
 
-int main(int argc, char **argv)
+int fasta_process_seq(const char *id, const char *seq)
 {
-    (void) argc;
-    srand(time(NULL));
-    while (*++argv)
-        shuffle_file(*argv);
-
-    return EXIT_SUCCESS;
+    (void) id;
+    (void) seq;
+    line_add(&root, pos);
+    lines++;
+    pos = ftell(stream);
+    if (pos == -1)
+        return FASTA_ERROR;
+    return FASTA_OK;
 }
