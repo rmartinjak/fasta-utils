@@ -6,7 +6,7 @@ CFLAGS += -Wall -Wextra
 #CFLAGS += -g
 CFLAGS += -O2
 
-_TARGETS = cat head shuffle split
+_TARGETS = cat head shuffle split lengths
 TARGETS = $(addprefix fasta-, $(_TARGETS)) 
 
 SRCDIR = src
