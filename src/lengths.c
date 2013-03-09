@@ -8,6 +8,7 @@
 
 int config = 0;
 
+static int brief = 0;
 static size_t count, min, max;
 
 #define STRFMT "%-*.*s"
@@ -22,10 +23,13 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "b")) != -1)
     {
         switch (opt)
         {
+            case 'b':
+                brief = 1;
+                break;
             case '?':
                 exit(EXIT_FAILURE);
             default:
@@ -43,6 +47,7 @@ void fasta_file_begin(const char *path, FILE *stream)
 
 void fasta_file_end(void)
 {
+    printf(STRFMT ": %zu\n", STRWIDTH, "count", count);
     printf(STRFMT ": %zu\n", STRWIDTH, "min", min);
     printf(STRFMT ": %zu\n", STRWIDTH, "max", max);
     count = min = max = 0;
@@ -57,6 +62,7 @@ int fasta_process_seq(const char *id, const char *seq)
     if (len < min) min = len;
     if (len > max) max = len;
 
-    printf(STRFMT ": %zu\n", STRWIDTH, id, len);
+    if (!brief)
+        printf(STRFMT ": %zu\n", STRWIDTH, id, len);
     return FASTA_OK;
 }
