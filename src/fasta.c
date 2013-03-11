@@ -72,8 +72,7 @@ int fasta_read(FILE *stream, const char *accept,
     while ((c = fgetc(stream)) != EOF && c != '\n')
     {
         GROW_BUF(id, id_size);
-        (*id)[i] = c;
-        i++;
+        (*id)[i++] = c;
     }
     (*id)[i] = '\0';
 
@@ -106,6 +105,7 @@ int fasta_read(FILE *stream, const char *accept,
         }
         ungetc(c, stream);
     }
+    /* or skip them */
     else
     {
         fasta_skipcomments(stream);
@@ -121,18 +121,14 @@ int fasta_read(FILE *stream, const char *accept,
             int d = ungetc(fgetc(stream), stream);
             if (d == EOF || d == '>')
                 break;
-
-            /* always skip newlines */
         }
-
 
         /* filter whitespace and unwanted characters */
         if (isspace(c) || (accept && !strchr(accept, c)))
             continue;
 
         GROW_BUF(seq, seq_size);
-        (*seq)[i] = c;
-        i++;
+        (*seq)[i++] = c;
     }
     (*seq)[i] = '\0';
 
