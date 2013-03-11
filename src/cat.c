@@ -9,6 +9,7 @@ int config = 0;
 
 
 static int width = FASTA_DEFAULTWIDTH;
+static char *comment = NULL;
 
 
 int fasta_init(void)
@@ -19,12 +20,15 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:c:")) != -1)
     {
         switch (opt)
         {
             case 'w':
                 width = fasta_parse_uint(optarg, "invalid width");
+                break;
+            case 'c':
+                comment = optarg;
                 break;
             case '?':
                 exit(EXIT_FAILURE);
@@ -47,6 +51,6 @@ void fasta_file_end(void)
 
 int fasta_process_seq(const char *id, const char *seq)
 {
-    fasta_write(stdout, id, NULL, seq, width);
+    fasta_write(stdout, id, comment, seq, width);
     return FASTA_OK;
 }
