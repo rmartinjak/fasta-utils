@@ -19,7 +19,7 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:c:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:")) != -1)
     {
         switch (opt)
         {
