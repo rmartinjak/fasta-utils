@@ -114,7 +114,7 @@ int fasta_read(FILE *stream, const char *accept,
 
     /* read sequence */
     i = 0;
-    while ((c = fgetc(stream)) != EOF)
+    while ((c = toupper(fgetc(stream))) != EOF)
     {
         if (c == '\n')
         {
