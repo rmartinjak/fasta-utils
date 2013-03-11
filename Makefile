@@ -1,6 +1,6 @@
 DESTDIR ?= ~
 
-CC = clang
+CC = cc
 CFLAGS += -std=c89 -pedantic
 CFLAGS += -Wall -Wextra
 #CFLAGS += -g
