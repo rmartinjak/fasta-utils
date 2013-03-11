@@ -35,11 +35,22 @@ int fasta_read(FILE *stream, const char *accept,
     int c;
     size_t i;
 
-    /* initialize buffers if needed */
-#define INIT_BUF(buf, sz)                                       \
-    if (!*buf && !(*buf = malloc(BUFSZ))) return FASTA_ERROR;   \
-    *sz = BUFSZ
+#define INIT_BUF(buf, sz) do {                                  \
+        if (!*buf) {                                            \
+            if (!(*buf = malloc(BUFSZ)))                        \
+                return FASTA_ERROR;                             \
+            *sz = BUFSZ;                                        \
+        }                                                       \
+    } while (0)
 
+#define GROW_BUF(buf, sz) do {                                  \
+        if (i >= *sz - 1)                                       \
+            if (fasta_growbuf(buf, sz) != FASTA_OK)             \
+                return FASTA_ERROR;                             \
+    } while (0)
+
+
+    /* initialize buffers if needed */
     INIT_BUF(id, id_size);
     INIT_BUF(seq, seq_size);
     if (comment)
@@ -55,11 +66,6 @@ int fasta_read(FILE *stream, const char *accept,
         return FASTA_ERROR;
     }
 
-
-#define GROW_BUF(buf, size)                                 \
-        if (i >= *size - 1)                                 \
-            if (fasta_growbuf(buf, size) != FASTA_OK)       \
-                return FASTA_ERROR
 
     /* read ID */
     i = 0;
