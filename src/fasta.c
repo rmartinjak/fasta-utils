@@ -8,7 +8,7 @@
 #define BUFSZ 500
 #define BUFINC 100
 
-static void fasta_skipcomments(FILE *stream)
+static void skipcomments(FILE *stream)
 {
     int c, d;
     while ((c = fgetc(stream)) == ';')
@@ -17,7 +17,7 @@ static void fasta_skipcomments(FILE *stream)
     ungetc(c, stream);
 }
 
-static int fasta_growbuf(char **buf, size_t *n)
+static int growbuf(char **buf, size_t *n)
 {
     char *tmp = realloc(*buf, *n + BUFINC);
     if (!tmp)
@@ -45,7 +45,7 @@ int fasta_read(FILE *stream, const char *accept,
 
 #define GROW_BUF(buf, sz) do {                                  \
         if (i >= *sz - 1)                                       \
-            if (fasta_growbuf(buf, sz) != FASTA_OK)             \
+            if (growbuf(buf, sz) != FASTA_OK)                   \
                 return FASTA_ERROR;                             \
     } while (0)
 
@@ -103,7 +103,7 @@ int fasta_read(FILE *stream, const char *accept,
     /* or skip them */
     else
     {
-        fasta_skipcomments(stream);
+        skipcomments(stream);
     }
 
 
