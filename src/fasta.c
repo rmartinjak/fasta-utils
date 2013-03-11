@@ -138,13 +138,13 @@ void fasta_write(FILE *stream, const char *id, const char *comment,
     if (comment && *comment)
     {
         char c;
-        fprintf(stream, "; ");
+        fprintf(stream, ";");
 
         while ((c = *comment++))
         {
             putc(c, stream);
             if (c == '\n')
-                fprintf(stream, "; ");
+                fprintf(stream, ";");
         }
         putc('\n', stream);
     }
