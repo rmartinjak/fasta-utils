@@ -9,7 +9,6 @@ int config = 0;
 
 
 static int width = FASTA_DEFAULTWIDTH;
-static char *comment = NULL;
 
 
 int fasta_init(void)
@@ -26,9 +25,6 @@ int fasta_getopt(int argc, char **argv)
         {
             case 'w':
                 width = fasta_parse_uint(optarg, "invalid width");
-                break;
-            case 'c':
-                comment = optarg;
                 break;
             case '?':
                 exit(EXIT_FAILURE);
