@@ -89,7 +89,7 @@ void fasta_file_begin(const char *path, FILE *newstream)
 
 void fasta_file_end(void)
 {
-    char *id = NULL, *comment, *seq = NULL;
+    char *id = NULL, *comment = NULL, *seq = NULL;
     size_t id_n, comment_n, seq_n;
 
     if (!stream)
