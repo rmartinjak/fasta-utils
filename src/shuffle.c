@@ -111,6 +111,7 @@ void fasta_file_end(void)
         line_del(ln);
     }
     free(id);
+    free(comment);
     free(seq);
 }
 

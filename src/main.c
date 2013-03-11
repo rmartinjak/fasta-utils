@@ -58,6 +58,7 @@ static int process_file(const char *path)
     fasta_file_end();
 
     free(id);
+    free(comment);
     free(seq);
     fclose(stream);
     return FASTA_OK;
