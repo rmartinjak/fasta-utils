@@ -9,7 +9,7 @@
 int config = 0;
 
 static int brief = 0;
-static size_t count, min, max;
+static unsigned long count, min, max;
 
 #define STRFMT "%-*.*s"
 #define STRWIDTH 30, 30
@@ -47,9 +47,9 @@ void fasta_file_begin(const char *path, FILE *stream)
 
 void fasta_file_end(void)
 {
-    printf(STRFMT ": %zu\n", STRWIDTH, "count", count);
-    printf(STRFMT ": %zu\n", STRWIDTH, "min", min);
-    printf(STRFMT ": %zu\n", STRWIDTH, "max", max);
+    printf(STRFMT ": %lu\n", STRWIDTH, "count", count);
+    printf(STRFMT ": %lu\n", STRWIDTH, "min", min);
+    printf(STRFMT ": %lu\n", STRWIDTH, "max", max);
     count = min = max = 0;
 }
 
@@ -57,14 +57,16 @@ int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     size_t len = strlen(seq);
     (void) comment;
-    
+
     if (!count++)
         min = len;
 
-    if (len < min) min = len;
-    if (len > max) max = len;
+    if (len < min)
+        min = len;
+    if (len > max)
+        max = len;
 
     if (!brief)
-        printf(STRFMT ": %zu\n", STRWIDTH, id, len);
+        printf(STRFMT ": %lu\n", STRWIDTH, id, (unsigned long) len);
     return FASTA_OK;
 }
