@@ -41,8 +41,9 @@ int fasta_read(FILE *stream, const char *accept,
     *sz = BUFSZ
 
     INIT_BUF(id, id_size);
-    INIT_BUF(comment, comment_size);
     INIT_BUF(seq, seq_size);
+    if (comment)
+        INIT_BUF(comment, comment_size);
 
 
     /* fasta ID line starts with '>', everything else is an error */
