@@ -92,11 +92,6 @@ int fasta_read(FILE *stream, const char *accept,
                 (*comment)[i++] = '\n';
             }
 
-            /* skip leading whitespace */
-            while ((d = fgetc(stream)) != EOF && isspace(d))
-                ;
-            ungetc(d, stream);
-
             while ((d = fgetc(stream)) != EOF && d != '\n')
             {
                 GROW_BUF(comment, comment_size);
