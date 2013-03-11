@@ -53,9 +53,11 @@ void fasta_file_end(void)
     count = min = max = 0;
 }
 
-int fasta_process_seq(const char *id, const char *seq)
+int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     size_t len = strlen(seq);
+    (void) comment;
+    
     if (!count++)
         min = len;
 

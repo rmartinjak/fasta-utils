@@ -138,7 +138,7 @@ void fasta_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *seq)
+int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     static int n = 0;
 
@@ -148,6 +148,6 @@ int fasta_process_seq(const char *id, const char *seq)
             return FASTA_ERROR;
         n = 1;
     }
-    fasta_write(outstream, id, NULL, seq, width);
+    fasta_write(outstream, id, comment, seq, width);
     return FASTA_OK;
 }

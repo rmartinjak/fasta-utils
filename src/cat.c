@@ -45,7 +45,7 @@ void fasta_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *seq)
+int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     fasta_write(stdout, id, comment, seq, width);
     return FASTA_OK;

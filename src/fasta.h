@@ -9,8 +9,10 @@
 #define FASTA_ERROR -2
 #define FASTA_CANCEL -3
 
-int fasta_read(FILE *stream, const char *accept, char **id,
-               size_t *id_size, char **seq, size_t *seq_size);
+int fasta_read(FILE *stream, const char *accept,
+               char **id, size_t *id_size,
+               char **comment, size_t *comment_size,
+               char **seq, size_t *seq_size);
 
 void fasta_write(FILE *stream, const char *id, const char *comment,
                  const char *seq, int width);

@@ -89,8 +89,8 @@ void fasta_file_begin(const char *path, FILE *newstream)
 
 void fasta_file_end(void)
 {
-    char *id = NULL, *seq = NULL;
-    size_t id_n, seq_n;
+    char *id = NULL, *comment, *seq = NULL;
+    size_t id_n, comment_n, seq_n;
 
     if (!stream)
         return;
@@ -103,9 +103,9 @@ void fasta_file_end(void)
             continue;
 
         if (!fseek(stream, ln->pos, SEEK_SET) &&
-            fasta_read(stream, NULL, &id, &id_n, &seq, &seq_n) == FASTA_OK)
+            fasta_read(stream, NULL, &id, &id_n, &comment, &comment_n, &seq, &seq_n) == FASTA_OK)
         {
-            fasta_write(stdout, id, NULL, seq, width);
+            fasta_write(stdout, id, comment, seq, width);
         }
 
         line_del(ln);
@@ -114,9 +114,10 @@ void fasta_file_end(void)
     free(seq);
 }
 
-int fasta_process_seq(const char *id, const char *seq)
+int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     (void) id;
+    (void) comment;
     (void) seq;
     line_add(&root, pos);
     lines++;

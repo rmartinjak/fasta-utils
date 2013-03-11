@@ -37,8 +37,8 @@ int fasta_main_getopt(int opt, char *arg)
 
 static int process_file(const char *path)
 {
-    char *id = NULL, *seq = NULL;
-    size_t id_n, seq_n;
+    char *id = NULL, *comment = NULL, *seq = NULL;
+    size_t id_n, comment_n, seq_n;
     FILE *stream = !strcmp(path, "-") ? stdin : fopen(path, "r");
     if (!stream)
     {
@@ -49,9 +49,9 @@ static int process_file(const char *path)
 
     fasta_file_begin(path, stream);
 
-    while (fasta_read(stream, alphabet, &id, &id_n, &seq, &seq_n) == FASTA_OK)
+    while (fasta_read(stream, alphabet, &id, &id_n, &comment, &comment_n, &seq, &seq_n) == FASTA_OK)
     {
-        if (fasta_process_seq(id, seq) == FASTA_CANCEL)
+        if (fasta_process_seq(id, comment, seq) == FASTA_CANCEL)
             break;
     }
 

@@ -52,11 +52,11 @@ void fasta_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *seq)
+int fasta_process_seq(const char *id, const char *comment, const char *seq)
 {
     if (!n--)
         return FASTA_CANCEL;
 
-    fasta_write(stdout, id, NULL, seq, width);
+    fasta_write(stdout, id, comment, seq, width);
     return FASTA_OK;
 }

@@ -23,5 +23,5 @@ int fasta_getopt(int argc, char **argv);
 void fasta_file_begin(const char *path, FILE *stream);
 void fasta_file_end(void);
 
-int fasta_process_seq(const char *id, const char *seq);
+int fasta_process_seq(const char *id, const char *comment, const char *seq);
 #endif

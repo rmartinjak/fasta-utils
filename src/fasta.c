@@ -27,29 +27,23 @@ static int fasta_growbuf(char **buf, size_t *n)
     return FASTA_OK;
 }
 
-int fasta_read(FILE *stream, const char *accept, char **id,
-               size_t *id_size, char **seq, size_t *seq_size)
+int fasta_read(FILE *stream, const char *accept,
+               char **id, size_t *id_size,
+               char **comment, size_t *comment_size,
+               char **seq, size_t *seq_size)
 {
     int c;
     size_t i;
 
-    if (!*id)
-        *id_size = 0;
-    if (!*seq)
-        *seq_size = 0;
-
     /* initialize buffers if needed */
-    if (!*id_size && !(*id = malloc(BUFSZ)))
-    {
-        return FASTA_ERROR;
-    }
-    *id_size = BUFSZ;
+#define INIT_BUF(buf, sz)                                       \
+    if (!*buf && !(*buf = malloc(BUFSZ))) return FASTA_ERROR;   \
+    *sz = BUFSZ
 
-    if (!*seq_size && !(*seq = malloc(BUFSZ)))
-    {
-        return FASTA_ERROR;
-    }
-    *seq_size = BUFSZ;
+    INIT_BUF(id, id_size);
+    INIT_BUF(comment, comment_size);
+    INIT_BUF(seq, seq_size);
+    
 
 
     /* fasta ID line starts with '>', everything else is an error */
@@ -62,23 +56,54 @@ int fasta_read(FILE *stream, const char *accept, char **id,
     }
 
 
+#define GROW_BUF(buf, size)                                 \
+        if (i >= *size - 1)                                 \
+            if (fasta_growbuf(buf, size) != FASTA_OK)       \
+                return FASTA_ERROR
+
     /* read ID */
     i = 0;
     while ((c = fgetc(stream)) != EOF && c != '\n')
     {
-        if (i >= *id_size - 1)
-        {
-            if (fasta_growbuf(id, id_size) != FASTA_OK)
-                return FASTA_ERROR;
-        }
+        GROW_BUF(id, id_size);
         (*id)[i] = c;
         i++;
     }
     (*id)[i] = '\0';
 
 
-    /* skip all comment lines */
-    fasta_skipcomments(stream);
+    /* read all comments */
+    if (comment)
+    {
+        i = 0;
+        **comment = '\0';
+        while ((c = fgetc(stream)) == ';')
+        {
+            int d;
+
+            if (i)
+            {
+                GROW_BUF(comment, comment_size);
+                (*comment)[i++] = '\n';
+            }
+
+            /* skip leading whitespace */
+            while ((d = fgetc(stream)) != EOF && isspace(d))
+                ;
+            ungetc(d, stream);
+
+            while ((d = fgetc(stream)) != EOF && d != '\n')
+            {
+                GROW_BUF(comment, comment_size);
+                (*comment)[i++] = d;
+            }
+        }
+        ungetc(c, stream);
+    }
+    else
+    {
+        fasta_skipcomments(stream);
+    }
 
 
     /* read sequence */
@@ -99,11 +124,7 @@ int fasta_read(FILE *stream, const char *accept, char **id,
         if (isspace(c) || (accept && !strchr(accept, c)))
             continue;
 
-        if (i >= *seq_size - 1)
-        {
-            if (fasta_growbuf(seq, seq_size) != FASTA_OK)
-                return FASTA_ERROR;
-        }
+        GROW_BUF(seq, seq_size);
         (*seq)[i] = c;
         i++;
     }
@@ -117,8 +138,19 @@ void fasta_write(FILE *stream, const char *id, const char *comment,
 {
     fprintf(stream, ">%s\n", id);
 
-    if (comment)
-        fprintf(stream, "; %s\n", comment);
+    if (comment && *comment)
+    {
+        char c;
+        fprintf(stream, "; ");
+
+        while ((c = *comment++))
+        {
+            putc(c, stream);
+            if (c == '\n')
+                fprintf(stream, "; ");
+        }
+        putc('\n', stream);
+    }
 
     if (!width)
     {
