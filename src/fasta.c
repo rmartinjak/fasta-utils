@@ -98,6 +98,7 @@ int fasta_read(FILE *stream, const char *accept,
                 (*comment)[i++] = d;
             }
         }
+        (*comment)[i] = '\0';
         ungetc(c, stream);
     }
     /* or skip them */
