@@ -6,7 +6,7 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = FASTA_ONEFILE;
+int main_config = MAIN_ONE_FILE;
 
 
 #define SUFFIXLEN_DEFAULT 2
@@ -69,21 +69,21 @@ static int next_outfile(void)
     return FASTA_OK;
 }
 
-int fasta_init(void)
+int tool_init(void)
 {
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
     unsigned suffixlen = SUFFIXLEN_DEFAULT;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "n:p:s:e:")) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS "n:p:s:e:")) != -1)
     {
         switch (opt)
         {
             case 'n':
-                count = fasta_parse_uint(optarg, "invalid number of lines");
+                count = main_parse_uint(optarg, "invalid number of lines");
                 break;
 
             case 'p':
@@ -91,7 +91,7 @@ int fasta_getopt(int argc, char **argv)
                 break;
 
             case 's':
-                suffixlen = fasta_parse_uint(optarg, "invalid suffix length");
+                suffixlen = main_parse_uint(optarg, "invalid suffix length");
                 break;
 
             case 'e':
@@ -102,7 +102,7 @@ int fasta_getopt(int argc, char **argv)
                 exit(EXIT_FAILURE);
 
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
 
@@ -121,17 +121,17 @@ int fasta_getopt(int argc, char **argv)
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *stream)
+void tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     static int n = 0;
 

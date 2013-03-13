@@ -6,21 +6,21 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = 0;
+int main_config = 0;
 
 
 static int append = 0;
 static char *new_comment = NULL;
 
-int fasta_init(void)
+int tool_init(void)
 {
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "c:k")) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS "c:k")) != -1)
     {
         switch (opt)
         {
@@ -36,23 +36,23 @@ int fasta_getopt(int argc, char **argv)
                 exit(EXIT_FAILURE);
 
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *stream)
+void tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     char *c = NULL;
     size_t sz = 1;

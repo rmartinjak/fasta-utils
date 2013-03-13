@@ -7,7 +7,7 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = 0;
+int main_config = 0;
 
 
 #define EXPR_MAX 128
@@ -71,15 +71,15 @@ static int expr_match(regex_t *expr, int count, const char *string)
 }
 
 
-int fasta_init(void)
+int tool_init(void)
 {
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "IAEvV:i:s:c:")) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS "IAEvV:i:s:c:")) != -1)
     {
         switch (opt)
         {
@@ -124,7 +124,7 @@ int fasta_getopt(int argc, char **argv)
             case '?':
                 exit(EXIT_FAILURE);
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
 
@@ -137,17 +137,17 @@ int fasta_getopt(int argc, char **argv)
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *stream)
+void tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     int match, i_match, c_match, s_match;
 

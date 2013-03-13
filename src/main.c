@@ -8,9 +8,9 @@
 
 static char *alphabet = NULL;
 
-int main_width = FASTA_DEFAULTWIDTH;
+int main_width = MAIN_DEFAULT_WIDTH;
 
-unsigned fasta_parse_uint(const char *s, const char *errmsg)
+unsigned main_parse_uint(const char *s, const char *errmsg)
 {
     char *endptr;
     int x = strtol(optarg, &endptr, 10);
@@ -22,7 +22,7 @@ unsigned fasta_parse_uint(const char *s, const char *errmsg)
     return x;
 }
 
-int fasta_main_getopt(int opt, char *arg)
+int main_getopt(int opt, char *arg)
 {
     switch (opt)
     {
@@ -31,7 +31,7 @@ int fasta_main_getopt(int opt, char *arg)
             break;
 
         case 'w':
-            main_width = fasta_parse_uint(optarg, "invalid width");
+            main_width = main_parse_uint(optarg, "invalid width");
             break;
 
         default:
@@ -53,15 +53,15 @@ static int process_file(const char *path)
         return FASTA_ERROR;
     }
 
-    fasta_file_begin(path, stream);
+    tool_file_begin(path, stream);
 
     while (fasta_read(stream, alphabet, &id, &id_n, &comment, &comment_n, &seq, &seq_n) == FASTA_OK)
     {
-        if (fasta_process_seq(id, comment, seq) == FASTA_CANCEL)
+        if (tool_process_seq(id, comment, seq) == FASTA_CANCEL)
             break;
     }
 
-    fasta_file_end();
+    tool_file_end();
 
     free(id);
     free(comment);
@@ -74,15 +74,15 @@ int main(int argc, char **argv)
 {
     int i, opt;
 
-    if (fasta_init() != FASTA_OK)
+    if (tool_init() != FASTA_OK)
         return EXIT_FAILURE;
 
-    opt = fasta_getopt(argc, argv);
+    opt = tool_getopt(argc, argv);
 
-    if (opt >= argc && !(config & FASTA_NOSTDIN))
+    if (opt >= argc && !(main_config & MAIN_NO_STDIN))
         process_file("-");
 
-    if ((config & FASTA_ONEFILE) && (argc - opt) > 1)
+    if ((main_config & MAIN_ONE_FILE) && (argc - opt) > 1)
     {
         fprintf(stderr, "ignoring additional input files\n");
         argc = opt + 1;

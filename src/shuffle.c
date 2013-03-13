@@ -6,7 +6,7 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = FASTA_NOSTDIN;
+int main_config = MAIN_NO_STDIN;
 
 
 static FILE *stream = NULL;
@@ -52,29 +52,29 @@ static void line_del(struct line *ln)
 }
 
 
-int fasta_init(void)
+int tool_init(void)
 {
     srand(time(NULL));
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS)) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS)) != -1)
     {
         switch (opt)
         {
             case '?':
                 exit(EXIT_FAILURE);
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *newstream)
+void tool_file_begin(const char *path, FILE *newstream)
 {
     (void) path;
     stream = newstream;
@@ -82,7 +82,7 @@ void fasta_file_begin(const char *path, FILE *newstream)
     pos = 0;
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
     char *id = NULL, *comment = NULL, *seq = NULL;
     size_t id_n, comment_n, seq_n;
@@ -110,7 +110,7 @@ void fasta_file_end(void)
     free(seq);
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     (void) id;
     (void) comment;
