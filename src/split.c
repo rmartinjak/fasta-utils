@@ -13,14 +13,12 @@ int config = FASTA_ONEFILE;
 #define SUFFIXLEN_MAX 100
 
 static int count = 1000;
-static int width = FASTA_DEFAULTWIDTH;
 
 static char *prefix = "x";
 static char suffix[SUFFIXLEN_MAX + 1];
 static char *ext = "fasta";
 
 static FILE *outstream = NULL;
-
 
 static char *next_suffix(void)
 {
@@ -71,7 +69,6 @@ static int next_outfile(void)
     return FASTA_OK;
 }
 
-
 int fasta_init(void)
 {
     return FASTA_OK;
@@ -81,14 +78,10 @@ int fasta_getopt(int argc, char **argv)
 {
     int opt;
     unsigned suffixlen = SUFFIXLEN_DEFAULT;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:n:p:s:e:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "n:p:s:e:")) != -1)
     {
         switch (opt)
         {
-            case 'w':
-                width = fasta_parse_uint(optarg, "invalid width");
-                break;
-
             case 'n':
                 count = fasta_parse_uint(optarg, "invalid number of lines");
                 break;
@@ -148,6 +141,6 @@ int fasta_process_seq(const char *id, const char *comment, const char *seq)
             return FASTA_ERROR;
         n = 1;
     }
-    fasta_write(outstream, id, comment, seq, width);
+    fasta_write(outstream, id, comment, seq, main_width);
     return FASTA_OK;
 }

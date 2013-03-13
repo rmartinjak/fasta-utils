@@ -14,7 +14,6 @@ static unsigned long count, min, max;
 #define STRFMT "%-*.*s"
 #define STRWIDTH 30, 30
 
-
 int fasta_init(void)
 {
     return FASTA_OK;

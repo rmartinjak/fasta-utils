@@ -10,8 +10,6 @@ int config = FASTA_NOSTDIN;
 
 
 static FILE *stream = NULL;
-static int width = FASTA_DEFAULTWIDTH;
-
 
 struct line
 {
@@ -63,13 +61,10 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS)) != -1)
     {
         switch (opt)
         {
-            case 'w':
-                width = fasta_parse_uint(optarg, "invalid width");
-                break;
             case '?':
                 exit(EXIT_FAILURE);
             default:
@@ -105,7 +100,7 @@ void fasta_file_end(void)
         if (!fseek(stream, ln->pos, SEEK_SET) &&
             fasta_read(stream, NULL, &id, &id_n, &comment, &comment_n, &seq, &seq_n) == FASTA_OK)
         {
-            fasta_write(stdout, id, comment, seq, width);
+            fasta_write(stdout, id, comment, seq, main_width);
         }
 
         line_del(ln);

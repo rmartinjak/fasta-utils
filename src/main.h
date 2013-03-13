@@ -3,8 +3,10 @@
 
 #include <stdio.h>
 
-#define FASTA_MAINOPTS "a:"
+#define FASTA_MAINOPTS "a:w:"
+
 #define FASTA_DEFAULTWIDTH 0
+extern int main_width;
 
 #define FASTA_NOSTDIN (1 << 0)
 #define FASTA_ONEFILE (1 << 1)

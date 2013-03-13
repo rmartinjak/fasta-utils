@@ -10,8 +10,6 @@
 int config = 0;
 
 
-static int width = FASTA_DEFAULTWIDTH;
-
 #define EXPR_MAX 128
 
 /* match ID */
@@ -81,7 +79,7 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:IAEvV:i:s:c:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "IAEvV:i:s:c:")) != -1)
     {
         switch (opt)
         {
@@ -123,9 +121,6 @@ int fasta_getopt(int argc, char **argv)
             case 'E':
                 expr_flags |= REG_EXTENDED;
                 break;
-            case 'w':
-                width = fasta_parse_uint(optarg, "invalid width");
-                break;
             case '?':
                 exit(EXIT_FAILURE);
             default:
@@ -166,6 +161,6 @@ int fasta_process_seq(const char *id, const char *comment, const char *seq)
         match = i_match | c_match | s_match;
 
     if (match)
-        fasta_write(stdout, id, comment, seq, width);
+        fasta_write(stdout, id, comment, seq, main_width);
     return FASTA_OK;
 }

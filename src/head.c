@@ -8,11 +8,7 @@
 int config = 0;
 
 
-static int count = 10;
-static int width = FASTA_DEFAULTWIDTH;
-
-static int n;
-
+static int n, count = 10;
 
 int fasta_init(void)
 {
@@ -22,13 +18,10 @@ int fasta_init(void)
 int fasta_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:n:")) != -1)
+    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "n:")) != -1)
     {
         switch (opt)
         {
-            case 'w':
-                width = fasta_parse_uint(optarg, "invalid width");
-                break;
             case 'n':
                 count = fasta_parse_uint(optarg, "invalid number of lines");
                 break;
@@ -57,6 +50,6 @@ int fasta_process_seq(const char *id, const char *comment, const char *seq)
     if (!n--)
         return FASTA_CANCEL;
 
-    fasta_write(stdout, id, comment, seq, width);
+    fasta_write(stdout, id, comment, seq, main_width);
     return FASTA_OK;
 }

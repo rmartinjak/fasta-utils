@@ -8,6 +8,8 @@
 
 static char *alphabet = NULL;
 
+int main_width = FASTA_DEFAULTWIDTH;
+
 unsigned fasta_parse_uint(const char *s, const char *errmsg)
 {
     char *endptr;
@@ -26,6 +28,10 @@ int fasta_main_getopt(int opt, char *arg)
     {
         case 'a':
             alphabet = arg;
+            break;
+
+        case 'w':
+            main_width = fasta_parse_uint(optarg, "invalid width");
             break;
 
         default:
