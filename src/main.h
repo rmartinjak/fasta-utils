@@ -3,25 +3,27 @@
 
 #include <stdio.h>
 
-#define FASTA_MAINOPTS "a:"
-#define FASTA_DEFAULTWIDTH 0
+#define MAIN_OPTS "a:w:"
 
-#define FASTA_NOSTDIN (1 << 0)
-#define FASTA_ONEFILE (1 << 1)
-extern int config;
+#define MAIN_DEFAULT_WIDTH 0
+extern int main_width;
+
+#define MAIN_NO_STDIN (1 << 0)
+#define MAIN_ONE_FILE (1 << 1)
+extern int main_config;
 
 
 /* implemented by main.c */
-unsigned fasta_parse_uint(const char *s, const char *errmsg);
-int fasta_main_getopt(int opt, char *arg);
+unsigned main_parse_uint(const char *s, const char *errmsg);
+int main_getopt(int opt, char *arg);
 
 
 /* implemented by the tool */
-int fasta_init(void);
-int fasta_getopt(int argc, char **argv);
+int tool_init(void);
+int tool_getopt(int argc, char **argv);
 
-void fasta_file_begin(const char *path, FILE *stream);
-void fasta_file_end(void);
+void tool_file_begin(const char *path, FILE *stream);
+void tool_file_end(void);
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq);
+int tool_process_seq(const char *id, const char *comment, const char *seq);
 #endif

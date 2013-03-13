@@ -6,21 +6,19 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = FASTA_ONEFILE;
+int main_config = MAIN_ONE_FILE;
 
 
 #define SUFFIXLEN_DEFAULT 2
 #define SUFFIXLEN_MAX 100
 
 static int count = 1000;
-static int width = FASTA_DEFAULTWIDTH;
 
 static char *prefix = "x";
 static char suffix[SUFFIXLEN_MAX + 1];
 static char *ext = "fasta";
 
 static FILE *outstream = NULL;
-
 
 static char *next_suffix(void)
 {
@@ -71,26 +69,21 @@ static int next_outfile(void)
     return FASTA_OK;
 }
 
-
-int fasta_init(void)
+int tool_init(void)
 {
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
     unsigned suffixlen = SUFFIXLEN_DEFAULT;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "w:n:p:s:e:")) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS "n:p:s:e:")) != -1)
     {
         switch (opt)
         {
-            case 'w':
-                width = fasta_parse_uint(optarg, "invalid width");
-                break;
-
             case 'n':
-                count = fasta_parse_uint(optarg, "invalid number of lines");
+                count = main_parse_uint(optarg, "invalid number of lines");
                 break;
 
             case 'p':
@@ -98,7 +91,7 @@ int fasta_getopt(int argc, char **argv)
                 break;
 
             case 's':
-                suffixlen = fasta_parse_uint(optarg, "invalid suffix length");
+                suffixlen = main_parse_uint(optarg, "invalid suffix length");
                 break;
 
             case 'e':
@@ -109,7 +102,7 @@ int fasta_getopt(int argc, char **argv)
                 exit(EXIT_FAILURE);
 
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
 
@@ -128,17 +121,17 @@ int fasta_getopt(int argc, char **argv)
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *stream)
+void tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     static int n = 0;
 
@@ -148,6 +141,6 @@ int fasta_process_seq(const char *id, const char *comment, const char *seq)
             return FASTA_ERROR;
         n = 1;
     }
-    fasta_write(outstream, id, comment, seq, width);
+    fasta_write(outstream, id, comment, seq, main_width);
     return FASTA_OK;
 }

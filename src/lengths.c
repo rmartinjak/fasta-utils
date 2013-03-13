@@ -6,7 +6,7 @@
 #include "fasta.h"
 #include "main.h"
 
-int config = 0;
+int main_config = 0;
 
 static int brief = 0;
 static unsigned long count, min, max;
@@ -14,16 +14,15 @@ static unsigned long count, min, max;
 #define STRFMT "%-*.*s"
 #define STRWIDTH 30, 30
 
-
-int fasta_init(void)
+int tool_init(void)
 {
     return FASTA_OK;
 }
 
-int fasta_getopt(int argc, char **argv)
+int tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, FASTA_MAINOPTS "b")) != -1)
+    while ((opt = getopt(argc, argv, MAIN_OPTS "b")) != -1)
     {
         switch (opt)
         {
@@ -33,19 +32,19 @@ int fasta_getopt(int argc, char **argv)
             case '?':
                 exit(EXIT_FAILURE);
             default:
-                fasta_main_getopt(opt, optarg);
+                main_getopt(opt, optarg);
         }
     }
     return optind;
 }
 
-void fasta_file_begin(const char *path, FILE *stream)
+void tool_file_begin(const char *path, FILE *stream)
 {
     (void) stream;
     printf("\n%s:\n", path);
 }
 
-void fasta_file_end(void)
+void tool_file_end(void)
 {
     printf(STRFMT ": %lu\n", STRWIDTH, "count", count);
     printf(STRFMT ": %lu\n", STRWIDTH, "min", min);
@@ -53,7 +52,7 @@ void fasta_file_end(void)
     count = min = max = 0;
 }
 
-int fasta_process_seq(const char *id, const char *comment, const char *seq)
+int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     size_t len = strlen(seq);
     (void) comment;
