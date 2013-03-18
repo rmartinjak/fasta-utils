@@ -130,7 +130,7 @@ int tool_getopt(int argc, char **argv)
 
     if (!i_expr_count && !c_expr_count && !s_expr_count)
     {
-        fprintf(stderr, "please specify at least one expression with -I, -C or -S\n");
+        fprintf(stderr, "please specify at least one expression with -i, -c or -s\n");
         exit(EXIT_FAILURE);
     }
 
