@@ -9,7 +9,7 @@
 int main_config = 0;
 
 static int brief = 0;
-static unsigned long count, min, max;
+static unsigned long count, min, max, total;
 
 #define STRFMT "%-*.*s"
 #define STRWIDTH 30, 30
@@ -49,7 +49,8 @@ void tool_file_end(void)
     printf(STRFMT ": %lu\n", STRWIDTH, "count", count);
     printf(STRFMT ": %lu\n", STRWIDTH, "min", min);
     printf(STRFMT ": %lu\n", STRWIDTH, "max", max);
-    count = min = max = 0;
+    printf(STRFMT ": %lu\n", STRWIDTH, "total", total);
+    count = min = max = total = 0;
 }
 
 int tool_process_seq(const char *id, const char *comment, const char *seq)
@@ -64,6 +65,7 @@ int tool_process_seq(const char *id, const char *comment, const char *seq)
         min = len;
     if (len > max)
         max = len;
+    total += len;
 
     if (!brief)
         printf(STRFMT ": %lu\n", STRWIDTH, id, (unsigned long) len);
