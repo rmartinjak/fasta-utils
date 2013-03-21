@@ -8,7 +8,7 @@
 
 static char *alphabet = NULL;
 
-int main_width = MAIN_DEFAULT_WIDTH;
+unsigned main_width = MAIN_DEFAULT_WIDTH;
 
 unsigned main_parse_uint(const char *s, const char *errmsg)
 {

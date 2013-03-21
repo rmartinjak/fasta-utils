@@ -132,7 +132,7 @@ int fasta_read(FILE *stream, const char *accept,
 }
 
 void fasta_write(FILE *stream, const char *id, const char *comment,
-                 const char *seq, int width)
+                 const char *seq, unsigned width)
 {
     fprintf(stream, ">%s\n", id);
 

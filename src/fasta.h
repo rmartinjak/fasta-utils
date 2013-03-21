@@ -15,5 +15,5 @@ int fasta_read(FILE *stream, const char *accept,
                char **seq, size_t *seq_size);
 
 void fasta_write(FILE *stream, const char *id, const char *comment,
-                 const char *seq, int width);
+                 const char *seq, unsigned width);
 #endif
