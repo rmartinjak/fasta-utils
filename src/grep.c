@@ -12,62 +12,57 @@ int main_config = 0;
 
 #define EXPR_MAX 128
 
-/* match ID */
-static regex_t i_expr[EXPR_MAX];
-static int i_expr_count = 0, i_invert = 0;
+struct match
+{
+    regex_t re[EXPR_MAX];
+    unsigned n;
+    int inv;
+} mi, mc, ms;
 
-/* match comment */
-static regex_t c_expr[EXPR_MAX];
-static int c_expr_count = 0, c_invert = 0;
-
-/* match sequence */
-static regex_t s_expr[EXPR_MAX];
-static int s_expr_count = 0, s_invert = 0;
-
-
-static int expr_flags = REG_NOSUB | REG_NEWLINE;
-static int match_flags = 0;
+static int eflags = REG_NOSUB | REG_NEWLINE;
+static int mflags = 0;
 
 /* id/comment/seq must match ALL given expressions */
 #define MATCH_AND (1 << 0)
+#define MATCH_INV (1 << 1)
 
 
-static int expr_add(regex_t *expr, int *count, const char *regex, int flags)
+static int expr_add(struct match *m, const char *regex, int flags)
 {
-    if (*count == EXPR_MAX)
+    if (m->n == EXPR_MAX)
     {
         fprintf(stderr, "too many expressions\n");
         return -1;
     }
 
-    if (regcomp(&expr[*count], regex, expr_flags | flags))
+    if (regcomp(&(m->re[m->n]), regex, eflags | flags))
     {
         fprintf(stderr, "invalid expression \"%s\"\n", regex);
         return -1;
     }
-    (*count)++;
+    m->n++;
     return 0;
 }
 
-static int expr_match(regex_t *expr, int count, const char *string)
+static int expr_match(const struct match *m, const char *s)
 {
-    int i;
+    unsigned i;
 
-    if (!count)
-        return (match_flags & MATCH_AND) ? 1 : 0;
+    if (!m->n)
+        return (mflags & MATCH_AND) ? 1 : 0;
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < m->n; i++)
     {
-        int match = !regexec(&expr[i], string, 0, NULL, 0);
+        int match = !regexec(&(m->re[i]), s, 0, NULL, 0);
 
-        if ((match_flags & MATCH_AND) && !match)
-            return 0;
-        else if (!(match_flags & MATCH_AND) && match)
-            return 1;
+        if ((mflags & MATCH_AND) && !match)
+            return 0 ^ m->inv;
+        else if (!(mflags & MATCH_AND) && match)
+            return 1 ^ m->inv;
     }
-    if (match_flags & MATCH_AND)
-        return 1;
-    return 0;
+    if (mflags & MATCH_AND)
+        return 1 ^ m->inv;
+    return 0 ^ m->inv;
 }
 
 
@@ -79,56 +74,69 @@ int tool_init(void)
 int tool_getopt(int argc, char **argv)
 {
     int opt;
+    char *p;
+
     while ((opt = getopt(argc, argv, MAIN_OPTS "IAEvV:i:s:c:")) != -1)
     {
         switch (opt)
         {
             case 'i':
-                if (expr_add(i_expr, &i_expr_count, optarg, 0))
+                if (expr_add(&mi, optarg, 0))
                     exit(EXIT_FAILURE);
                 break;
+
             case 'c':
-                if (expr_add(c_expr, &c_expr_count, optarg, 0))
+                if (expr_add(&mc, optarg, 0))
                     exit(EXIT_FAILURE);
                 break;
+
             case 's':
-                if (expr_add(s_expr, &s_expr_count, optarg, REG_ICASE))
+                if (expr_add(&ms, optarg, REG_ICASE))
                     exit(EXIT_FAILURE);
                 break;
+
             case 'v':
-                i_invert = c_invert = s_invert = 1;
+                mflags |= MATCH_INV;
                 break;
+
             case 'V':
-                if (!strcmp("i", optarg) || !strcmp("id", optarg))
-                    i_invert = 1;
-                else if (!strcmp("c", optarg) || !strcmp("comment", optarg))
-                    c_invert = 1;
-                else if (!strcmp("s", optarg) || !strcmp("seq", optarg) || !strcmp("sequence", optarg))
-                    s_invert = 1;
-                else
+                for (p = optarg; *p; p++)
                 {
-                    fprintf(stderr, "invalid argument to -V. available are:\n"
-                            "i|id    c|comment     s|seq|sequence\n");
-                    exit(EXIT_FAILURE);
+                    if (*p == 'i')
+                        mi.inv = 1;
+                    else if (*p == 'c')
+                        mc.inv = 1;
+                    else if (*p == 's')
+                        ms.inv = 1;
+                    else
+                    {
+                        fprintf(stderr, "Invalid argument to -V. Allowed: i, c, s\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
                 break;
+
             case 'A':
-                match_flags |= MATCH_AND;
+                mflags |= MATCH_AND;
                 break;
+
             case 'I':
-                expr_flags |= REG_ICASE;
+                eflags |= REG_ICASE;
                 break;
+
             case 'E':
-                expr_flags |= REG_EXTENDED;
+                eflags |= REG_EXTENDED;
                 break;
+
             case '?':
                 exit(EXIT_FAILURE);
+
             default:
                 main_getopt(opt, optarg);
         }
     }
 
-    if (!i_expr_count && !c_expr_count && !s_expr_count)
+    if (!mi.n && !mc.n && !ms.n)
     {
         fprintf(stderr, "please specify at least one expression with -i, -c or -s\n");
         exit(EXIT_FAILURE);
@@ -149,16 +157,19 @@ void tool_file_end(void)
 
 int tool_process_seq(const char *id, const char *comment, const char *seq)
 {
-    int match, i_match, c_match, s_match;
+    int match, i, c, s;
 
-    i_match = expr_match(i_expr, i_expr_count, id) ^ i_invert;
-    c_match = expr_match(c_expr, c_expr_count, comment) ^ c_invert;
-    s_match = expr_match(s_expr, s_expr_count, seq) ^ s_invert;
+    i = expr_match(&mi, id);
+    c = expr_match(&mc, comment);
+    s = expr_match(&ms, seq);
 
-    if ((match_flags & MATCH_AND))
-        match = i_match & c_match & s_match;
+    if ((mflags & MATCH_AND))
+        match = i && c && s;
     else
-        match = i_match | c_match | s_match;
+        match = i || c || s;
+
+    if (mflags & MATCH_INV)
+        match = !match;
 
     if (match)
         fasta_write(stdout, id, comment, seq, main_width);
