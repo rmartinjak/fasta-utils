@@ -28,8 +28,10 @@ int tool_getopt(int argc, char **argv)
             case 'n':
                 chop_width = main_parse_uint(optarg, "invalid chop width");
                 break;
+
             case '?':
                 exit(EXIT_FAILURE);
+
             default:
                 main_getopt(opt, optarg);
         }
