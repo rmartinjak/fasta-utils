@@ -22,6 +22,7 @@ int tool_getopt(int argc, char **argv)
         {
             case '?':
                 exit(EXIT_FAILURE);
+
             default:
                 main_getopt(opt, optarg);
         }

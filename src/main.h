@@ -6,7 +6,7 @@
 #define MAIN_OPTS "a:w:"
 
 #define MAIN_DEFAULT_WIDTH 0
-extern int main_width;
+extern unsigned main_width;
 
 #define MAIN_NO_STDIN (1 << 0)
 #define MAIN_ONE_FILE (1 << 1)

@@ -25,8 +25,10 @@ int tool_getopt(int argc, char **argv)
             case 'n':
                 count = main_parse_uint(optarg, "invalid number of lines");
                 break;
+
             case '?':
                 exit(EXIT_FAILURE);
+
             default:
                 main_getopt(opt, optarg);
         }

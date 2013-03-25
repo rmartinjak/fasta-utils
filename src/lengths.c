@@ -29,6 +29,7 @@ int tool_getopt(int argc, char **argv)
             case 'b':
                 brief = 1;
                 break;
+
             case '?':
                 exit(EXIT_FAILURE);
             default:
