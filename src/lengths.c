@@ -19,6 +19,10 @@ int tool_init(void)
     return FASTA_OK;
 }
 
+void tool_destroy(void)
+{
+}
+
 int tool_getopt(int argc, char **argv)
 {
     int opt;

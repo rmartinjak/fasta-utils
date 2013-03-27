@@ -91,5 +91,7 @@ int main(int argc, char **argv)
     for (i = opt; i < argc; i++)
         process_file(argv[i]);
 
+    tool_destroy();
+
     return EXIT_SUCCESS;
 }
