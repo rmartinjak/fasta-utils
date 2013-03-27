@@ -20,6 +20,7 @@ int main_getopt(int opt, char *arg);
 
 /* implemented by the tool */
 int tool_init(void);
+void tool_destroy(void);
 int tool_getopt(int argc, char **argv);
 
 void tool_file_begin(const char *path, FILE *stream);

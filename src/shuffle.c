@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <limits.h>
 #include <getopt.h>
 
 #include "fasta.h"
@@ -8,54 +9,62 @@
 
 int main_config = MAIN_NO_STDIN;
 
+static void *xmalloc(size_t sz)
+{
+    void *p = malloc(sz);
+    if (!p)
+    {
+        fprintf(stderr, "memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
+
+static void *xrealloc(void *p, size_t sz)
+{
+    p = realloc(p, sz);
+    if (!p)
+    {
+        fprintf(stderr, "memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
+
+static void permute(int *x, int n)
+{
+    int i, r;
+
+    for (i = 0; i < n; i++)
+        x[i] = -1;
+
+    for (i = 0; i < n; i++)
+    {
+        for (r = rand() % n; x[r] >= 0; r = (r + 1) % n)
+            ;
+        x[r] = i;
+    }
+}
 
 static FILE *stream = NULL;
 
-struct line
+static struct
 {
-    long pos;
-    struct line *prev, *next;
-};
-
-
-static int lines = 1, pos = 0;
-static struct line root = { -1, &root, &root };
-
-
-static struct line *line_get(struct line *ln, unsigned n)
-{
-    while (n--)
-        ln = ln->next;
-    return ln;
-}
-
-static struct line *line_add(struct line *ln, long pos)
-{
-    struct line *new = malloc(sizeof *new);
-    if (new)
-    {
-        new->pos = pos;
-
-        new->next = ln->next;
-        new->prev = ln;
-
-        ln->next->prev = new;
-        ln->next = new;
-    }
-    return new;
-}
-
-static void line_del(struct line *ln)
-{
-    ln->prev->next = ln->next;
-    ln->next->prev = ln->prev;
-}
+    long *p;
+    long last;
+    size_t n, sz;
+} pos;
 
 
 int tool_init(void)
 {
     srand(time(NULL));
     return FASTA_OK;
+}
+
+void tool_destroy(void)
+{
+    free(pos.p);
 }
 
 int tool_getopt(int argc, char **argv)
@@ -79,36 +88,42 @@ void tool_file_begin(const char *path, FILE *newstream)
 {
     (void) path;
     stream = newstream;
-    lines = 1;
-    pos = 0;
+    pos.n = 0;
+    pos.last = 0;
 }
 
 void tool_file_end(void)
 {
     char *id = NULL, *comment = NULL, *seq = NULL;
     size_t id_n, comment_n, seq_n;
+    size_t i;
+    int *perm;
 
-    if (!stream)
-        return;
+    perm = xmalloc(sizeof *perm * pos.n);
+    permute(perm, pos.n);
 
-    while (root.next != &root)
+    for (i = 0; i < pos.n; i++)
     {
-        struct line *ln = line_get(&root, rand() % lines);
-
-        if (ln == &root)
-            continue;
-
-        if (!fseek(stream, ln->pos, SEEK_SET) &&
-            fasta_read(stream, NULL, &id, &id_n, &comment, &comment_n, &seq, &seq_n) == FASTA_OK)
+        if (fseek(stream, pos.p[perm[i]], SEEK_SET))
         {
-            fasta_write(stdout, id, comment, seq, main_width);
+            perror("fseek() error in input stream");
+            exit(EXIT_FAILURE);
         }
 
-        line_del(ln);
+        if (fasta_read(stream, NULL, &id, &id_n, &comment, &comment_n,
+                    &seq, &seq_n) != FASTA_OK)
+        {
+            fprintf(stderr, "error reading input stream\n");
+            exit(EXIT_FAILURE);
+        }
+
+        fasta_write(stdout, id, comment, seq, main_width);
     }
+
     free(id);
     free(comment);
     free(seq);
+    free(perm);
 }
 
 int tool_process_seq(const char *id, const char *comment, const char *seq)
@@ -116,10 +131,22 @@ int tool_process_seq(const char *id, const char *comment, const char *seq)
     (void) id;
     (void) comment;
     (void) seq;
-    line_add(&root, pos);
-    lines++;
-    pos = ftell(stream);
-    if (pos == -1)
+
+    if (pos.n == INT_MAX)
+    {
+        fprintf(stderr, "too many sequences\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pos.n >= pos.sz)
+    {
+        pos.sz += 1024;
+        pos.p = xrealloc(pos.p, sizeof *pos.p * pos.sz);
+    }
+    pos.p[pos.n] = pos.last;
+    pos.n++;
+
+    if ((pos.last = ftell(stream)) == -1)
         return FASTA_ERROR;
     return FASTA_OK;
 }
