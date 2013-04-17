@@ -58,9 +58,9 @@ int fasta_read(FILE *stream, const char *accept,
     if (accept && accept != accept_last)
     {
         int k;
-        for (k = CHAR_MIN; k < CHAR_MAX + 1; k++)
+        for (k = 0; k <= UCHAR_MAX; k++)
         {
-            accept_table[(unsigned char)k] = !!strchr(accept, k);
+            accept_table[(unsigned char)k] = strchr(accept, k) != NULL;
         }
         accept_last = accept;
     }
@@ -136,7 +136,7 @@ int fasta_read(FILE *stream, const char *accept,
         }
 
         /* filter whitespace and unwanted characters */
-        if (isspace(c) || (accept && accept_table[(unsigned char)c]))
+        if (isspace(c) || (accept && !accept_table[(unsigned char)c]))
             continue;
 
         GROW_BUF(seq, seq_size);
