@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
 #define BUFSZ 500
 #define BUFINC 100
@@ -35,6 +36,9 @@ int fasta_read(FILE *stream, const char *accept,
     int c;
     size_t i;
 
+    static const char *accept_last;
+    static int accept_table[UCHAR_MAX + 1];
+
 #define INIT_BUF(buf, sz) do {                                  \
         if (!*buf) {                                            \
             if (!(*buf = malloc(BUFSZ)))                        \
@@ -48,6 +52,18 @@ int fasta_read(FILE *stream, const char *accept,
             if (growbuf(buf, sz) != FASTA_OK)                   \
                 return FASTA_ERROR;                             \
     } while (0)
+
+
+    /* (re-)initialize accept table */
+    if (accept && accept != accept_last)
+    {
+        int k;
+        for (k = 0; k <= UCHAR_MAX; k++)
+        {
+            accept_table[(unsigned char)k] = strchr(accept, k) != NULL;
+        }
+        accept_last = accept;
+    }
 
 
     /* initialize buffers if needed */
@@ -120,7 +136,7 @@ int fasta_read(FILE *stream, const char *accept,
         }
 
         /* filter whitespace and unwanted characters */
-        if (isspace(c) || (accept && !strchr(accept, c)))
+        if (isspace(c) || (accept && !accept_table[(unsigned char)c]))
             continue;
 
         GROW_BUF(seq, seq_size);
