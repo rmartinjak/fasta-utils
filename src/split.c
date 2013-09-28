@@ -20,7 +20,8 @@ static char *ext = "fasta";
 
 static FILE *outstream = NULL;
 
-static char *next_suffix(void)
+static char *
+next_suffix(void)
 {
     char *p = suffix + strlen(suffix) - 1;
 
@@ -43,15 +44,16 @@ static char *next_suffix(void)
     return suffix;
 }
 
-static int next_outfile(void)
+static int
+next_outfile(void)
 {
     char path[1024];
 
-    if (outstream)
+    if (outstream) {
         fclose(outstream);
+    }
 
-    if (strlen(prefix) + strlen(suffix) + 1 + strlen(ext) + 1 > sizeof path)
-    {
+    if (strlen(prefix) + strlen(suffix) + 1 + strlen(ext) + 1 > sizeof path) {
         fprintf(stderr, "prefix+suffix+.ext too long\n");
         exit(EXIT_FAILURE);
     }
@@ -59,8 +61,7 @@ static int next_outfile(void)
     sprintf(path, "%s%s%s%s", prefix, suffix, (*ext ? "." : ""), ext);
     outstream = fopen(path, "w");
 
-    if (!outstream)
-    {
+    if (!outstream) {
         fprintf(stderr, "%s: ", path);
         perror("");
         return FASTA_ERROR;
@@ -69,80 +70,74 @@ static int next_outfile(void)
     return FASTA_OK;
 }
 
-int tool_init(void)
+int
+tool_init(void)
 {
     return FASTA_OK;
 }
 
-void tool_destroy(void)
+void
+tool_destroy(void)
 {
 }
 
-int tool_getopt(int argc, char **argv)
+int
+tool_getopt(int argc, char **argv)
 {
     int opt;
     unsigned suffixlen = SUFFIXLEN_DEFAULT;
-    while ((opt = getopt(argc, argv, MAIN_OPTS "n:p:s:e:")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, MAIN_OPTS "n:p:s:e:")) != -1) {
+        switch (opt) {
             case 'n':
                 count = main_parse_uint(optarg, "invalid number of lines");
                 break;
-
             case 'p':
                 prefix = optarg;
                 break;
-
             case 's':
                 suffixlen = main_parse_uint(optarg, "invalid suffix length");
                 break;
-
             case 'e':
                 ext = optarg;
                 break;
-
             case '?':
                 exit(EXIT_FAILURE);
-
             default:
                 main_getopt(opt, optarg);
         }
     }
-
-    if (!suffixlen || suffixlen > SUFFIXLEN_DEFAULT)
-    {
+    if (!suffixlen || suffixlen > SUFFIXLEN_DEFAULT) {
         fprintf(stderr, "invalid suffix length: %u\n", suffixlen);
         exit(EXIT_FAILURE);
     }
     memset(suffix, 'a', suffixlen);
     suffix[suffixlen] = '\0';
-    if (next_outfile() != FASTA_OK)
-    {
+    if (next_outfile() != FASTA_OK) {
         exit(EXIT_FAILURE);
     }
-
     return optind;
 }
 
-void tool_file_begin(const char *path, FILE *stream)
+void
+tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void tool_file_end(void)
+void
+tool_file_end(void)
 {
 }
 
-int tool_process_seq(const char *id, const char *comment, const char *seq)
+int
+tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     static int n = 0;
-
-    if (++n > count)
-    {
-        if (!next_suffix() || next_outfile() != FASTA_OK)
+    if (++n > count) {
+        if (!next_suffix() || next_outfile() != FASTA_OK) {
             return FASTA_ERROR;
+        }
         n = 1;
     }
     fasta_write(outstream, id, comment, seq, main_width);

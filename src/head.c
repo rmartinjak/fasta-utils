@@ -10,29 +10,28 @@ int main_config = 0;
 
 static int n, count = 10;
 
-int tool_init(void)
+int
+tool_init(void)
 {
     return FASTA_OK;
 }
 
-void tool_destroy(void)
+void
+tool_destroy(void)
 {
 }
 
-int tool_getopt(int argc, char **argv)
+int
+tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, MAIN_OPTS "n:")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, MAIN_OPTS "n:")) != -1) {
+        switch (opt) {
             case 'n':
                 count = main_parse_uint(optarg, "invalid number of lines");
                 break;
-
             case '?':
                 exit(EXIT_FAILURE);
-
             default:
                 main_getopt(opt, optarg);
         }
@@ -40,22 +39,25 @@ int tool_getopt(int argc, char **argv)
     return optind;
 }
 
-void tool_file_begin(const char *path, FILE *stream)
+void
+tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
     n = count;
 }
 
-void tool_file_end(void)
+void
+tool_file_end(void)
 {
 }
 
-int tool_process_seq(const char *id, const char *comment, const char *seq)
+int
+tool_process_seq(const char *id, const char *comment, const char *seq)
 {
-    if (!n--)
-        return FASTA_CANCEL;
-
+    if (!n--) {
+        return FASTA_EOF;
+    }
     fasta_write(stdout, id, comment, seq, main_width);
     return FASTA_OK;
 }

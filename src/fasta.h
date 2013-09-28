@@ -4,15 +4,30 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define FASTA_OK 0
-#define FASTA_EOF -1
-#define FASTA_ERROR -2
-#define FASTA_CANCEL -3
+enum
+{
+    FASTA_OK,
+    FASTA_EOF,
+    FASTA_ENOMEM,
+    FASTA_EINVAL,
+    FASTA_EBADF,
+    FASTA_ERROR
+};
 
-int fasta_read(FILE *stream, const char *accept,
-               char **id, size_t *id_size,
-               char **comment, size_t *comment_size,
-               char **seq, size_t *seq_size);
+
+struct fasta_reader
+{
+    char *line;
+    long line_len;
+    size_t line_sz, line_no;
+    char *header, *comment, *seq;
+    size_t header_sz, comment_sz, seq_sz;
+};
+
+void fasta_reader_init(struct fasta_reader *rd);
+void fasta_reader_free(struct fasta_reader *rd);
+int fasta_read(FILE *stream, struct fasta_reader *rd);
+
 
 void fasta_write(FILE *stream, const char *id, const char *comment,
                  const char *seq, unsigned width);

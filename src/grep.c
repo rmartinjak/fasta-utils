@@ -27,16 +27,14 @@ static int mflags = 0;
 #define MATCH_INV (1 << 1)
 
 
-static int expr_add(struct match *m, const char *regex, int flags)
+static int
+expr_add(struct match *m, const char *regex, int flags)
 {
-    if (m->n == EXPR_MAX)
-    {
+    if (m->n == EXPR_MAX) {
         fprintf(stderr, "too many expressions\n");
         return -1;
     }
-
-    if (regcomp(&(m->re[m->n]), regex, eflags | flags))
-    {
+    if (regcomp(&(m->re[m->n]), regex, eflags | flags)) {
         fprintf(stderr, "invalid expression \"%s\"\n", regex);
         return -1;
     }
@@ -44,138 +42,135 @@ static int expr_add(struct match *m, const char *regex, int flags)
     return 0;
 }
 
-static int expr_match(const struct match *m, const char *s)
+static int
+expr_match(const struct match *m, const char *s)
 {
     unsigned i;
-
-    if (!m->n)
+    if (!m->n) {
         return (mflags & MATCH_AND) ? 1 : 0;
-
-    for (i = 0; i < m->n; i++)
-    {
+    }
+    for (i = 0; i < m->n; i++) {
         int match = !regexec(&(m->re[i]), s, 0, NULL, 0);
 
-        if ((mflags & MATCH_AND) && !match)
+        if ((mflags & MATCH_AND) && !match) {
             return 0 ^ m->inv;
-        else if (!(mflags & MATCH_AND) && match)
+        }
+        else if (!(mflags & MATCH_AND) && match) {
             return 1 ^ m->inv;
+        }
     }
-    if (mflags & MATCH_AND)
+    if (mflags & MATCH_AND) {
         return 1 ^ m->inv;
+    }
     return 0 ^ m->inv;
 }
 
 
-int tool_init(void)
+int
+tool_init(void)
 {
     return FASTA_OK;
 }
 
-void tool_destroy(void)
+void
+tool_destroy(void)
 {
 }
 
-int tool_getopt(int argc, char **argv)
+int
+tool_getopt(int argc, char **argv)
 {
     int opt;
     char *p;
-
-    while ((opt = getopt(argc, argv, MAIN_OPTS "IAEvV:i:s:c:")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, MAIN_OPTS "IAEvV:i:s:c:")) != -1) {
+        switch (opt) {
             case 'i':
-                if (expr_add(&mi, optarg, 0))
+                if (expr_add(&mi, optarg, 0)) {
                     exit(EXIT_FAILURE);
+                }
                 break;
-
             case 'c':
-                if (expr_add(&mc, optarg, 0))
+                if (expr_add(&mc, optarg, 0)) {
                     exit(EXIT_FAILURE);
+                }
                 break;
-
             case 's':
-                if (expr_add(&ms, optarg, REG_ICASE))
+                if (expr_add(&ms, optarg, REG_ICASE)) {
                     exit(EXIT_FAILURE);
+                }
                 break;
-
             case 'v':
                 mflags |= MATCH_INV;
                 break;
-
             case 'V':
-                for (p = optarg; *p; p++)
-                {
-                    if (*p == 'i')
+                for (p = optarg; *p; p++) {
+                    if (*p == 'i') {
                         mi.inv = 1;
-                    else if (*p == 'c')
+                    }
+                    else if (*p == 'c') {
                         mc.inv = 1;
-                    else if (*p == 's')
+                    }
+                    else if (*p == 's') {
                         ms.inv = 1;
-                    else
-                    {
+                    }
+                    else {
                         fprintf(stderr, "Invalid argument to -V. Allowed: i, c, s\n");
                         exit(EXIT_FAILURE);
                     }
                 }
                 break;
-
             case 'A':
                 mflags |= MATCH_AND;
                 break;
-
             case 'I':
                 eflags |= REG_ICASE;
                 break;
-
             case 'E':
                 eflags |= REG_EXTENDED;
                 break;
-
             case '?':
                 exit(EXIT_FAILURE);
-
             default:
                 main_getopt(opt, optarg);
         }
     }
-
-    if (!mi.n && !mc.n && !ms.n)
-    {
+    if (!mi.n && !mc.n && !ms.n) {
         fprintf(stderr, "please specify at least one expression with -i, -c or -s\n");
         exit(EXIT_FAILURE);
     }
-
     return optind;
 }
 
-void tool_file_begin(const char *path, FILE *stream)
+void
+tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
 }
 
-void tool_file_end(void)
+void
+tool_file_end(void)
 {
 }
 
-int tool_process_seq(const char *id, const char *comment, const char *seq)
+int
+tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     int match, i, c, s;
-
     i = expr_match(&mi, id);
     c = expr_match(&mc, comment);
     s = expr_match(&ms, seq);
-
-    if ((mflags & MATCH_AND))
+    if ((mflags & MATCH_AND)) {
         match = i && c && s;
-    else
+    }
+    else {
         match = i || c || s;
-
-    if (mflags & MATCH_INV)
+    }
+    if (mflags & MATCH_INV) {
         match = !match;
-
-    if (match)
+    }
+    if (match) {
         fasta_write(stdout, id, comment, seq, main_width);
+    }
     return FASTA_OK;
 }

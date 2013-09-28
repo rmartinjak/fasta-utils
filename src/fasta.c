@@ -6,174 +6,161 @@
 #include <ctype.h>
 #include <limits.h>
 
-#define BUFSZ 500
-#define BUFINC 100
-
-static void skipcomments(FILE *stream)
+#if !defined(_GNU_SOURCE) && _POSIX_C_SOURCE < 200809L && _XOPEN_SOURCE < 700
+static long
+getline(char **lineptr, size_t *n, FILE *stream)
 {
-    int c, d;
-    while ((c = fgetc(stream)) == ';')
-        while ((d = fgetc(stream)) != EOF && d != '\n')
-            ;
-    ungetc(c, stream);
+    char buf[4097];
+    size_t len, total = 0;
+
+    do {
+        if (!fgets(buf, sizeof buf, stream)) {
+            if (!total) {
+                return -1;
+            }
+            break;
+        }
+        len = strlen(buf);
+        if (!*lineptr || *n < total + len) {
+            void *tmp = realloc(*lineptr, total + len);
+            if (!tmp) {
+                return -1;
+            }
+            *lineptr = tmp;
+            *n = total + len;
+        }
+        memcpy(*lineptr + total, buf, len);
+        total += len - 1;
+    } while (buf[len - 1] != '\n');
+
+    return total + 1;
+}
+#endif
+
+void
+fasta_reader_init(struct fasta_reader *rd)
+{
+    static struct fasta_reader zero;
+    *rd = zero;
 }
 
-static int growbuf(char **buf, size_t *n)
+void
+fasta_reader_free(struct fasta_reader *rd)
 {
-    char *tmp = realloc(*buf, *n + BUFINC);
-    if (!tmp)
-        return FASTA_ERROR;
-    *n += BUFINC;
-    *buf = tmp;
-    return FASTA_OK;
+    free(rd->line);
+    free(rd->header);
+    free(rd->seq);
 }
 
-int fasta_read(FILE *stream, const char *accept,
-               char **id, size_t *id_size,
-               char **comment, size_t *comment_size,
-               char **seq, size_t *seq_size)
+static void
+reader_getline(FILE *stream, struct fasta_reader *rd)
 {
-    int c;
-    size_t i;
+    rd->line_len = getline(&rd->line, &rd->line_sz, stream);
+    rd->line_no++;
+}
 
-    static const char *accept_last;
-    static int accept_table[UCHAR_MAX + 1];
+int
+fasta_read(FILE *stream, struct fasta_reader *rd)
+{
+    size_t len, total_len;
 
-#define INIT_BUF(buf, sz) do {                                  \
-        if (!*buf) {                                            \
-            if (!(*buf = malloc(BUFSZ)))                        \
-                return FASTA_ERROR;                             \
-            *sz = BUFSZ;                                        \
-        }                                                       \
-    } while (0)
+    if (!rd->line) {
+        reader_getline(stream, rd);
+    }
 
-#define GROW_BUF(buf, sz) do {                                  \
-        if (i >= *sz - 1)                                       \
-            if (growbuf(buf, sz) != FASTA_OK)                   \
-                return FASTA_ERROR;                             \
-    } while (0)
+    if (rd->line_len == -1) {
+        return FASTA_EOF;
+    }
 
+    /* header needs at least '>', one character, '\n' */
+    if (rd->line_len < 3 || rd->line[0] != '>') {
+        return FASTA_EINVAL;
+    }
 
-    /* (re-)initialize accept table */
-    if (accept && accept != accept_last)
-    {
-        int k;
-        for (k = 0; k <= UCHAR_MAX; k++)
-        {
-            accept_table[(unsigned char)k] = strchr(accept, k) != NULL;
+    len = rd->line_len - 1;
+    if (!rd->header || rd->header_sz < len) {
+        void *tmp = realloc(rd->header, len);
+        if (!tmp) {
+            return FASTA_ENOMEM;
         }
-        accept_last = accept;
+        rd->header = tmp;
+        rd->header_sz = len;
+    }
+    memcpy(rd->header, rd->line + 1, len - 1);
+    rd->header[len - 1] = '\0';
+
+    reader_getline(stream, rd);
+    if (rd->line_len == -1) {
+        return FASTA_EINVAL;
     }
 
-
-    /* initialize buffers if needed */
-    INIT_BUF(id, id_size);
-    INIT_BUF(seq, seq_size);
-    if (comment)
-        INIT_BUF(comment, comment_size);
-
-
-    /* fasta ID line starts with '>', everything else is an error */
-    if ((c = fgetc(stream)) != '>')
+    for (total_len = 0;
+         rd->line[0] == ';' && rd->line_len != -1;
+         reader_getline(stream, rd))
     {
-        if (c == EOF)
-            return FASTA_EOF;
-        ungetc(c, stream);
-        return FASTA_ERROR;
-    }
-
-
-    /* read ID */
-    i = 0;
-    while ((c = fgetc(stream)) != EOF && c != '\n')
-    {
-        GROW_BUF(id, id_size);
-        (*id)[i++] = c;
-    }
-    (*id)[i] = '\0';
-
-
-    /* read all comments */
-    if (comment)
-    {
-        i = 0;
-        **comment = '\0';
-        while ((c = fgetc(stream)) == ';')
-        {
-            int d;
-
-            if (i)
-            {
-                GROW_BUF(comment, comment_size);
-                (*comment)[i++] = '\n';
+        len = rd->line_len;
+        if (rd->comment_sz < total_len + len) {
+            void *tmp = realloc(rd->comment, total_len + len);
+            if (!tmp) {
+                return FASTA_ENOMEM;
             }
+            rd->comment = tmp;
+            rd->comment_sz = total_len + len;
+        }
+        /* skip leading ';' but keep newline */
+        memcpy(rd->comment + total_len, rd->line + 1, len - 1);
+        total_len += len - 1;
+    }
+    if (total_len > 1) {
+        /* remove last newline */
+        rd->comment[total_len - 1] = '\0';
+    }
 
-            while ((d = fgetc(stream)) != EOF && d != '\n')
-            {
-                GROW_BUF(comment, comment_size);
-                (*comment)[i++] = d;
+    for (total_len = 0;
+         rd->line[0] != '>' && rd->line_len != -1;
+         reader_getline(stream, rd))
+    {
+        len = rd->line_len;
+        if (rd->seq_sz < total_len + len) {
+            void *tmp = realloc(rd->seq, total_len + len);
+            if (!tmp) {
+                return FASTA_ENOMEM;
             }
+            rd->seq = tmp;
+            rd->seq_sz = total_len + len;
         }
-        (*comment)[i] = '\0';
-        ungetc(c, stream);
+        memcpy(rd->seq + total_len, rd->line, len - 1);
+        total_len += len - 1;
+        rd->seq[total_len] = '\0';
     }
-    /* or skip them */
-    else
-    {
-        skipcomments(stream);
-    }
-
-
-    /* read sequence */
-    i = 0;
-    while ((c = toupper(fgetc(stream))) != EOF)
-    {
-        if (c == '\n')
-        {
-            int d = ungetc(fgetc(stream), stream);
-            if (d == EOF || d == '>')
-                break;
-        }
-
-        /* filter whitespace and unwanted characters */
-        if (isspace(c) || (accept && !accept_table[(unsigned char)c]))
-            continue;
-
-        GROW_BUF(seq, seq_size);
-        (*seq)[i++] = c;
-    }
-    (*seq)[i] = '\0';
 
     return FASTA_OK;
 }
 
-void fasta_write(FILE *stream, const char *id, const char *comment,
+void
+fasta_write(FILE *stream, const char *id, const char *comment,
                  const char *seq, unsigned width)
 {
     fprintf(stream, ">%s\n", id);
 
-    if (comment && *comment)
-    {
-        char c;
-        fprintf(stream, ";");
-
-        while ((c = *comment++))
-        {
-            putc(c, stream);
-            if (c == '\n')
-                fprintf(stream, ";");
+    if (comment && *comment) {
+        const char *c = comment, *nl;
+        while (*c) {
+            nl = strchr(c, '\n');
+            if (!nl) {
+                nl = c + strlen(c);
+            }
+            fprintf(stream, ";%.*s\n", (int)(nl - c), c);
+            c = nl + !!*nl;
         }
-        putc('\n', stream);
     }
 
-    if (!width)
-    {
+    if (!width) {
         fprintf(stream, "%s\n", seq);
         return;
     }
 
-    while (*seq)
-    {
+    while (*seq) {
         seq += fprintf(stream, "%.*s", width, seq);
         fputc('\n', stream);
     }

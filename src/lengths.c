@@ -14,26 +14,26 @@ static unsigned long count, min, max, total;
 #define STRFMT "%-*.*s"
 #define STRWIDTH 30, 30
 
-int tool_init(void)
+int
+tool_init(void)
 {
     return FASTA_OK;
 }
 
-void tool_destroy(void)
+void
+tool_destroy(void)
 {
 }
 
-int tool_getopt(int argc, char **argv)
+int
+tool_getopt(int argc, char **argv)
 {
     int opt;
-    while ((opt = getopt(argc, argv, MAIN_OPTS "b")) != -1)
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, MAIN_OPTS "b")) != -1) {
+        switch (opt) {
             case 'b':
                 brief = 1;
                 break;
-
             case '?':
                 exit(EXIT_FAILURE);
             default:
@@ -43,13 +43,15 @@ int tool_getopt(int argc, char **argv)
     return optind;
 }
 
-void tool_file_begin(const char *path, FILE *stream)
+void
+tool_file_begin(const char *path, FILE *stream)
 {
     (void) stream;
     printf("\n%s:\n", path);
 }
 
-void tool_file_end(void)
+void
+tool_file_end(void)
 {
     printf(STRFMT ": %lu\n", STRWIDTH, "count", count);
     printf(STRFMT ": %lu\n", STRWIDTH, "min", min);
@@ -58,21 +60,26 @@ void tool_file_end(void)
     count = min = max = total = 0;
 }
 
-int tool_process_seq(const char *id, const char *comment, const char *seq)
+int
+tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     size_t len = strlen(seq);
     (void) comment;
 
-    if (!count++)
+    if (!count++) {
         min = len;
+    }
 
-    if (len < min)
+    if (len < min) {
         min = len;
-    if (len > max)
+    }
+    if (len > max) {
         max = len;
+    }
     total += len;
 
-    if (!brief)
+    if (!brief) {
         printf(STRFMT ": %lu\n", STRWIDTH, id, (unsigned long) len);
+    }
     return FASTA_OK;
 }
