@@ -45,7 +45,7 @@ tool_getopt(int argc, char **argv)
 }
 
 void
-tool_file_begin(const char *path, FILE *stream)
+tool_file_begin(const char *path, gzFile stream)
 {
     (void) path;
     (void) stream;
@@ -61,7 +61,7 @@ tool_process_seq(const char *id, const char *comment, const char *seq)
 {
     char *c = NULL;
     size_t sz = 1;
-    if (!append || !*comment) {
+    if (!append || !(comment && *comment)) {
         comment = NULL;
     }
 

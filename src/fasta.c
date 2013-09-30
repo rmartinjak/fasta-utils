@@ -6,15 +6,14 @@
 #include <ctype.h>
 #include <limits.h>
 
-#if !defined(_GNU_SOURCE) && _POSIX_C_SOURCE < 200809L && _XOPEN_SOURCE < 700
 static long
-getline(char **lineptr, size_t *n, FILE *stream)
+gzgetline(char **lineptr, size_t *n, gzFile stream)
 {
     char buf[4097];
     size_t len, total = 0;
 
     do {
-        if (!fgets(buf, sizeof buf, stream)) {
+        if (!gzgets(stream, buf, sizeof buf)) {
             if (!total) {
                 return -1;
             }
@@ -31,11 +30,11 @@ getline(char **lineptr, size_t *n, FILE *stream)
         }
         memcpy(*lineptr + total, buf, len);
         total += len - 1;
+        (*lineptr)[total + 1] = '\0';
     } while (buf[len - 1] != '\n');
 
     return total + 1;
 }
-#endif
 
 void
 fasta_reader_init(struct fasta_reader *rd, size_t seq_sz_hint)
@@ -54,14 +53,14 @@ fasta_reader_free(struct fasta_reader *rd)
 }
 
 static void
-reader_getline(FILE *stream, struct fasta_reader *rd)
+reader_getline(gzFile stream, struct fasta_reader *rd)
 {
-    rd->line_len = getline(&rd->line, &rd->line_sz, stream);
+    rd->line_len = gzgetline(&rd->line, &rd->line_sz, stream);
     rd->line_no++;
 }
 
 int
-fasta_read(FILE *stream, struct fasta_reader *rd)
+fasta_read(gzFile stream, struct fasta_reader *rd)
 {
     size_t len, total_len;
     if (!rd->header) {
@@ -153,11 +152,37 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
     return FASTA_OK;
 }
 
-void
-fasta_write(FILE *stream, const char *id, const char *comment,
-                 const char *seq, unsigned width)
+
+int
+fasta_write(FILE *stream, const char *header, const char *comment,
+            const char *seq, unsigned width)
 {
-    fprintf(stream, ">%s\n", id);
+#if HAVE_ZLIB
+    int fd;
+    gzFile gs;
+
+    fd = dup(fileno(stream));
+    if (fd == -1) {
+        return FASTA_ERROR;
+    }
+    gs = gzdopen(fd, "wT");
+    if (!gs) {
+        close(fd);
+        return FASTA_ERROR;
+    }
+    fasta_write_gz(gs, header, comment, seq, width);
+    gzclose(gs);
+#else
+    fasta_write_gz(stream, header, comment, seq, width);
+#endif
+    return FASTA_OK;
+}
+
+void
+fasta_write_gz(gzFile stream, const char *header, const char *comment,
+               const char *seq, unsigned width)
+{
+    gzprintf(stream, ">%s\n", header);
 
     if (comment && *comment) {
         const char *c = comment, *nl;
@@ -166,18 +191,18 @@ fasta_write(FILE *stream, const char *id, const char *comment,
             if (!nl) {
                 nl = c + strlen(c);
             }
-            fprintf(stream, ";%.*s\n", (int)(nl - c), c);
+            gzprintf(stream, ";%.*s\n", (int)(nl - c), c);
             c = nl + !!*nl;
         }
     }
 
     if (!width) {
-        fprintf(stream, "%s\n", seq);
+        gzprintf(stream, "%s\n", seq);
         return;
     }
 
     while (*seq) {
-        seq += fprintf(stream, "%.*s", width, seq);
-        fputc('\n', stream);
+        seq += gzprintf(stream, "%.*s", width, seq);
+        gzputc(stream, '\n');
     }
 }

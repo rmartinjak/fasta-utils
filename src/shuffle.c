@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <limits.h>
 #include <getopt.h>
@@ -49,7 +50,7 @@ permute(int *x, int n)
     }
 }
 
-static FILE *stream = NULL;
+static gzFile stream = NULL;
 
 static struct
 {
@@ -90,7 +91,7 @@ tool_getopt(int argc, char **argv)
 }
 
 void
-tool_file_begin(const char *path, FILE *newstream)
+tool_file_begin(const char *path, gzFile newstream)
 {
     (void) path;
     stream = newstream;
@@ -105,10 +106,13 @@ tool_file_end(void)
     int *perm = xmalloc(sizeof *perm * pos.n);
     permute(perm, pos.n);
     for (i = 0; i < pos.n; i++) {
-        if (fseek(stream, pos.p[perm[i]], SEEK_SET)) {
+        if (gzseek(stream, pos.p[perm[i]], SEEK_SET) == -1) {
             perror("fseek() error in input stream");
             exit(EXIT_FAILURE);
         }
+        free(rd.line);
+        rd.line = NULL;
+        rd.line_len = 0;
         if (fasta_read(stream, &rd) != FASTA_OK) {
             fprintf(stderr, "error reading input stream\n");
             exit(EXIT_FAILURE);
@@ -134,10 +138,13 @@ tool_process_seq(const char *id, const char *comment, const char *seq)
         pos.sz += 1024;
         pos.p = xrealloc(pos.p, sizeof *pos.p * pos.sz);
     }
+    if (pos.last) {
+        pos.last -= strlen(id) + 2;
+    }
     pos.p[pos.n] = pos.last;
     pos.n++;
 
-    if ((pos.last = ftell(stream)) == -1) {
+    if ((pos.last = gztell(stream)) == -1) {
         return FASTA_EBADF;
     }
     return FASTA_OK;

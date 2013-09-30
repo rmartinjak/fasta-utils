@@ -3,11 +3,16 @@ DESTDIR ?= ~
 CC = cc
 CFLAGS += -std=c89 -pedantic
 CFLAGS += -Wall -Wextra
-#CFLAGS += -g
 CFLAGS += -O2
+#CFLAGS += -O0 -g
+
+
+CPPFLAGS += -DHAVE_ZLIB
+CPPFLAGS += -D_XOPEN_SOURCE
+LIBS += -lz
 
 _TARGETS = cat head shuffle split lengths comment grep chop
-TARGETS = $(addprefix fasta-, $(_TARGETS)) 
+TARGETS = $(addprefix fasta-, $(_TARGETS))
 
 SRCDIR = src
 OBJDIR = obj
@@ -18,13 +23,13 @@ OBJ = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(_OBJ)))
 
 default : $(TARGETS)
 
-$(OBJDIR)/%.o : $(SRCDIR)/%.c | $(OBJDIR)
+$(OBJDIR)/%.o : $(SRCDIR)/%.c | $(OBJDIR) $(SRCDIR)/fasta.h
 	@echo CC -c $^
-	@$(CC) $(CFLAGS) -c -o $@ $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^ $(LIBS)
 
 $(TARGETS) :: fasta-% : $(SRCDIR)/%.c $(OBJ)
 	@echo CC -o $@
-	@$(CC) $(CFLAGS) -o $@ $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LIBS)
 
 $(OBJDIR) :
 	@mkdir $(OBJDIR)

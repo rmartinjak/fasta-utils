@@ -23,7 +23,7 @@ int tool_init(void);
 void tool_destroy(void);
 int tool_getopt(int argc, char **argv);
 
-void tool_file_begin(const char *path, FILE *stream);
+void tool_file_begin(const char *path, gzFile stream);
 void tool_file_end(void);
 
 int tool_process_seq(const char *id, const char *comment, const char *seq);

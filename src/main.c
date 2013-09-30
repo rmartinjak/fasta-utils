@@ -42,12 +42,19 @@ static int
 process_file(const char *path)
 {
     struct fasta_reader rd;
-    FILE *stream = !strcmp(path, "-") ? stdin : fopen(path, "r");
+#if HAVE_ZLIB
+#define gz_stdin gzdopen(dup(0), "r")
+#else
+#define gz_stdin stdin
+#endif
+    gzFile stream = !strcmp(path, "-") ? gz_stdin : gzopen(path, "r");
     if (!stream) {
         fprintf(stderr, "%s: ", path);
         perror("");
         return FASTA_ERROR;
     }
+    (void) 0;
+    (void) gzbuffer(stream, ((4) * (1 << 10)));
 
     tool_file_begin(path, stream);
 
@@ -57,9 +64,9 @@ process_file(const char *path)
             break;
         }
     }
-    fasta_reader_free(&rd);
     tool_file_end();
-    fclose(stream);
+    fasta_reader_free(&rd);
+    gzclose(stream);
     return FASTA_OK;
 }
 
