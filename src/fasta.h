@@ -21,6 +21,7 @@ struct fasta_reader
     long line_len;
     size_t line_sz, line_no;
     char *header, *comment, *seq;
+    size_t header_len, comment_len, seq_len;
     size_t header_sz, comment_sz, seq_sz, seq_sz_hint;
 };
 

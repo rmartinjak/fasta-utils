@@ -3,11 +3,12 @@ DESTDIR ?= ~
 CC = cc
 CFLAGS += -std=c89 -pedantic
 CFLAGS += -Wall -Wextra
-#CFLAGS += -g
 CFLAGS += -O2
+CFLAGS += -DNDEBUG
+#CFLAGS += -O0 -g
 
 _TARGETS = cat head shuffle split lengths comment grep chop
-TARGETS = $(addprefix fasta-, $(_TARGETS)) 
+TARGETS = $(addprefix fasta-, $(_TARGETS))
 
 SRCDIR = src
 OBJDIR = obj

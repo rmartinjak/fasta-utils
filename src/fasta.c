@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include <limits.h>
 
+#include <assert.h>
+
 #if !defined(_GNU_SOURCE) && _POSIX_C_SOURCE < 200809L && _XOPEN_SOURCE < 700
 static long
 getline(char **lineptr, size_t *n, FILE *stream)
@@ -104,6 +106,8 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
     }
     memcpy(rd->header, rd->line + 1, len - 1);
     rd->header[len - 1] = '\0';
+    rd->header_len = len - 1;
+    assert(rd->header_len == strlen(rd->header));
 
     reader_getline(stream, rd);
     if (rd->line_len == -1) {
@@ -131,6 +135,8 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
         /* remove last newline */
         rd->comment[total_len - 1] = '\0';
     }
+    rd->comment_len = total_len - 1;
+    assert(!rd->comment || rd->comment_len == strlen(rd->comment));
 
     for (total_len = 0;
          rd->line[0] != '>' && rd->line_len != -1;
@@ -149,6 +155,8 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
         total_len += len - 1;
         rd->seq[total_len] = '\0';
     }
+    rd->seq_len = total_len;
+    assert(rd->seq_len == strlen(rd->seq));
 
     return FASTA_OK;
 }
