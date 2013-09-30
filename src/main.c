@@ -51,7 +51,7 @@ process_file(const char *path)
 
     tool_file_begin(path, stream);
 
-    fasta_reader_init(&rd);
+    fasta_reader_init(&rd, 0);
     while (fasta_read(stream, &rd) == FASTA_OK) {
         if (tool_process_seq(rd.header, rd.comment, rd.seq) != FASTA_OK) {
             break;

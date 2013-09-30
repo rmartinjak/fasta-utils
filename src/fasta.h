@@ -21,10 +21,10 @@ struct fasta_reader
     long line_len;
     size_t line_sz, line_no;
     char *header, *comment, *seq;
-    size_t header_sz, comment_sz, seq_sz;
+    size_t header_sz, comment_sz, seq_sz, seq_sz_hint;
 };
 
-void fasta_reader_init(struct fasta_reader *rd);
+void fasta_reader_init(struct fasta_reader *rd, size_t seq_sz_hint);
 void fasta_reader_free(struct fasta_reader *rd);
 int fasta_read(FILE *stream, struct fasta_reader *rd);
 

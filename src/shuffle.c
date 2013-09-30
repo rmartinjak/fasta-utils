@@ -62,7 +62,7 @@ static struct
 int
 tool_init(void)
 {
-    fasta_reader_init(&rd);
+    fasta_reader_init(&rd, 0);
     srand(time(NULL));
     return FASTA_OK;
 }

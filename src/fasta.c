@@ -38,10 +38,11 @@ getline(char **lineptr, size_t *n, FILE *stream)
 #endif
 
 void
-fasta_reader_init(struct fasta_reader *rd)
+fasta_reader_init(struct fasta_reader *rd, size_t seq_sz_hint)
 {
     static struct fasta_reader zero;
     *rd = zero;
+    rd->seq_sz_hint = seq_sz_hint;
 }
 
 void
@@ -63,6 +64,21 @@ int
 fasta_read(FILE *stream, struct fasta_reader *rd)
 {
     size_t len, total_len;
+    if (!rd->header) {
+        rd->header_sz = 0;
+    }
+    if (!rd->comment) {
+        rd->comment_sz = 0;
+    }
+    if (!rd->seq) {
+        if (rd->seq_sz) {
+            rd->seq = malloc(rd->seq_sz_hint);
+            if (!rd->seq) {
+                return FASTA_ENOMEM;
+            }
+        }
+        rd->seq_sz = rd->seq_sz_hint;
+    }
 
     if (!rd->line) {
         reader_getline(stream, rd);
@@ -78,7 +94,7 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
     }
 
     len = rd->line_len - 1;
-    if (!rd->header || rd->header_sz < len) {
+    if (rd->header_sz < len) {
         void *tmp = realloc(rd->header, len);
         if (!tmp) {
             return FASTA_ENOMEM;
