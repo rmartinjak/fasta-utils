@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include <limits.h>
 #include <getopt.h>
 
@@ -133,6 +134,9 @@ tool_process_seq(const char *id, const char *comment, const char *seq)
     if (pos.n >= pos.sz) {
         pos.sz += 1024;
         pos.p = xrealloc(pos.p, sizeof *pos.p * pos.sz);
+    }
+    if (pos.last) {
+        pos.last -= strlen(id) + 2;
     }
     pos.p[pos.n] = pos.last;
     pos.n++;
