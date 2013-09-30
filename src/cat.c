@@ -35,7 +35,7 @@ tool_getopt(int argc, char **argv)
 }
 
 void
-tool_file_begin(const char *path, gzFile stream)
+tool_file_begin(const char *path, FILE *stream)
 {
     (void) path;
     (void) stream;
