@@ -71,7 +71,7 @@ fasta_read(FILE *stream, struct fasta_reader *rd)
         rd->comment_sz = 0;
     }
     if (!rd->seq) {
-        if (rd->seq_sz) {
+        if (rd->seq_sz_hint) {
             rd->seq = malloc(rd->seq_sz_hint);
             if (!rd->seq) {
                 return FASTA_ENOMEM;
